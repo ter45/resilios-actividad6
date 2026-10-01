@@ -27,7 +27,7 @@ gem "audited", "~> 5.7"
 
 # Utilities
 gem "bootsnap", require: false
-gem "image_processing", "~> 1.2"
+gem "image_processing", "~> 2.1"
 gem "kamal", require: false
 gem "thruster", require: false
 gem "tzinfo-data", platforms: %i[ windows jruby ]
