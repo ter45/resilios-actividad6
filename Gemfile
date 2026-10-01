@@ -22,7 +22,7 @@ gem "pundit", "~> 2.4"
 
 # Domain
 gem "money-rails", "~> 1.15"
-gem "discard", "~> 1.4"
+gem "discard", "~> 2.0"
 gem "audited", "~> 5.7"
 
 # Utilities
