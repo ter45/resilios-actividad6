@@ -1,0 +1,104 @@
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="text-2xl font-bold text-gray-900">Créditos</h2>
+    <p class="text-sm text-gray-500 mt-1">Fiados pendientes y pagados</p>
+  </div>
+</div>
+
+<!-- Cards de resumen -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Créditos abiertos</p>
+    <p class="text-2xl font-bold text-orange-700"><%= @totals[:open_count] %></p>
+  </div>
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Total adeudado</p>
+    <p class="text-2xl font-bold text-red-700">$ <%= number_with_delimiter(@totals[:open_balance].to_i, delimiter: ".") %></p>
+  </div>
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Créditos pagados</p>
+    <p class="text-2xl font-bold text-green-700"><%= @totals[:paid_count] %></p>
+  </div>
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Abonos de hoy</p>
+    <p class="text-2xl font-bold text-emerald-700">$ <%= number_with_delimiter(@totals[:total_payments_today].to_i, delimiter: ".") %></p>
+  </div>
+</div>
+
+<!-- Filtros -->
+<%= form_with url: admin_credits_path, method: :get, local: true, class: "bg-white rounded-lg shadow p-4 mb-4 grid grid-cols-1 md:grid-cols-4 gap-3 items-end" do %>
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">Estado</label>
+    <%= select_tag :status,
+          options_for_select([["Todos", ""], ["Abiertos", "open"], ["Pagados", "paid"]], params[:status]),
+          class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white" %>
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">Cliente</label>
+    <%= select_tag :customer_id,
+          options_from_collection_for_select(@customers, :id, :name, params[:customer_id]),
+          include_blank: "Todos",
+          class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white" %>
+  </div>
+  <div class="flex gap-2 col-span-2">
+    <%= submit_tag "Filtrar", class: "px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg font-medium cursor-pointer" %>
+    <%= link_to "Limpiar", admin_credits_path, class: "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium" %>
+  </div>
+<% end %>
+
+<!-- Tabla -->
+<div class="bg-white rounded-lg shadow overflow-hidden">
+  <% if @credits.any? %>
+    <table class="w-full">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Fecha</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Cliente</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Venta</th>
+          <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Monto</th>
+          <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Saldo</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Progreso</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Estado</th>
+          <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @credits.each do |credit| %>
+          <tr class="<%= credit.paid? ? 'bg-green-50' : '' %>">
+            <td class="px-4 py-3 text-sm text-gray-600"><%= credit.created_at.strftime("%d/%m %H:%M") %></td>
+            <td class="px-4 py-3 text-sm font-medium"><%= credit.customer.name %></td>
+            <td class="px-4 py-3 text-sm font-mono">
+              <%= link_to credit.sale.number, admin_sale_path(credit.sale), class: "text-blue-600 hover:underline" %>
+            </td>
+            <td class="px-4 py-3 text-right text-sm"><%= credit.display_amount %></td>
+            <td class="px-4 py-3 text-right text-sm font-bold <%= credit.paid? ? 'text-green-700' : 'text-red-700' %>">
+              <%= credit.display_balance %>
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <div class="w-32 bg-gray-200 rounded-full h-2">
+                <% pct = credit.paid_percent.to_f %>
+                <div class="<%= pct == 100 ? 'bg-green-500' : (pct > 50 ? 'bg-emerald-500' : 'bg-orange-500') %> h-2 rounded-full" style="width: <%= pct %>%"></div>
+              </div>
+              <span class="text-xs text-gray-500 mt-1"><%= credit.paid_percent %>%</span>
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <% if credit.paid? %>
+                <span class="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">Pagado</span>
+              <% else %>
+                <span class="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded">Abierto</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 text-right text-sm">
+              <%= link_to "Ver", admin_credit_path(credit),
+                    class: "text-xs px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="p-12 text-center text-gray-500">
+      <p>No hay créditos con los filtros seleccionados.</p>
+    </div>
+  <% end %>
+</div>

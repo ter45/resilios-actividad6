@@ -1,0 +1,13 @@
+﻿catalogo,caso,mediana_original_ms,mediana_mejorada_ms,p95_original_ms,p95_mejorada_ms,SQL_original,SQL_mejorada
+100,nombre,22.882,6.244,37.644,14.724,43,5
+100,categoria_texto,22.795,5.825,36.75,13.17,43,5
+100,codigo,3.603,3.984,4.611,6.791,4,5
+100,sin_resultados,2.375,3.715,3.064,5.565,2,4
+1000,nombre,26.205,6.283,34.691,7.719,43,5
+1000,categoria_texto,25.009,6.283,33.284,9.363,43,5
+1000,codigo,3.951,4.511,6.47,5.975,4,5
+1000,sin_resultados,2.707,3.95,4.09,6.21,2,4
+10000,nombre,49.65,9.053,59.921,12.735,43,5
+10000,categoria_texto,50.154,9.502,65.873,14.097,43,5
+10000,codigo,6.885,5.645,9.085,7.338,4,5
+10000,sin_resultados,5.064,6.051,7.444,7.413,2,4

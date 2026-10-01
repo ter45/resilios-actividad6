@@ -1,0 +1,35 @@
+default: &default
+  adapter: postgresql
+  encoding: unicode
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  username: <%= ENV.fetch("DB_USERNAME", "resilios") %>
+  password: <%= ENV.fetch("DB_PASSWORD", "resilios_dev") %>
+  host: <%= ENV.fetch("DB_HOST", "db") %>
+  port: <%= ENV.fetch("DB_PORT", 5432) %>
+  variables:
+    statement_timeout: 5000
+
+development:
+  <<: *default
+  host: <%= ENV.fetch("DB_HOST", "localhost") %>
+  database: resilios_pos_development
+
+test:
+  <<: *default
+  host: <%= ENV.fetch("DB_HOST", "localhost") %>
+  database: resilios_pos_test
+
+production:
+  primary: &primary_production
+    <<: *default
+    database: resilios_pos_production
+    username: resilios
+    password: <%= ENV["DB_PASSWORD"] %>
+  cache:
+    <<: *primary_production
+    database: resilios_pos_production_cache
+    migrations_paths: db/cache_migrate
+  queue:
+    <<: *primary_production
+    database: resilios_pos_production_queue
+    migrations_paths: db/queue_migrate

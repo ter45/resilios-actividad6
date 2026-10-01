@@ -1,0 +1,79 @@
+<div class="min-h-screen bg-slate-900 text-white">
+  <header class="bg-slate-800 px-6 py-3 flex items-center justify-between border-b border-slate-700">
+    <div class="flex items-center gap-4">
+      <h1 class="text-lg font-bold">Ventas suspendidas</h1>
+      <span class="text-xs px-2 py-1 bg-emerald-700 rounded">Terminal <%= current_user.terminal_assigned || "A" %></span>
+      <span class="text-xs text-slate-400"><%= current_user.display_name %></span>
+    </div>
+    <%= link_to "← Volver al POS", new_pos_sale_path, class: "text-sm text-slate-300 hover:text-white" %>
+  </header>
+
+  <main class="max-w-5xl mx-auto p-8 space-y-4">
+    <% if flash[:notice].present? %>
+      <div class="bg-emerald-900/40 border border-emerald-700 rounded-lg p-3 text-sm text-emerald-200">
+        <%= flash[:notice] %>
+      </div>
+    <% end %>
+    <% if flash[:alert].present? %>
+      <div class="bg-red-900/40 border border-red-700 rounded-lg p-3 text-sm text-red-200">
+        <%= flash[:alert] %>
+      </div>
+    <% end %>
+
+    <% if @suspended.any? %>
+      <p class="text-sm text-slate-400">
+        Mostrando ventas suspendidas en las últimas 24 horas. <strong><%= @suspended.size %></strong> en total.
+      </p>
+
+      <div class="space-y-3">
+        <% @suspended.each do |sale| %>
+          <div class="bg-slate-800 rounded-lg p-4 flex items-center justify-between gap-4">
+            <div class="flex-1">
+              <div class="flex items-center gap-3 mb-2">
+                <h3 class="text-lg font-semibold"><%= sale.display_number %></h3>
+                <span class="text-xs text-slate-400">
+                  <%= sale.suspended_at.strftime("%d/%m %H:%M") %>
+                </span>
+              </div>
+              <div class="text-sm text-slate-300">
+                <strong><%= sale.display_customer %></strong>
+                · <%= sale.sale_items.count %> <%= sale.sale_items.count == 1 ? "ítem" : "ítems" %>
+                · cajero <%= sale.user.display_name %>
+              </div>
+              <% if sale.suspended_notes.present? %>
+                <p class="text-xs text-amber-300 mt-2 italic">"<%= sale.suspended_notes %>"</p>
+              <% end %>
+              <details class="mt-2 text-xs text-slate-400">
+                <summary class="cursor-pointer hover:text-slate-200">Ver items</summary>
+                <ul class="mt-1 ml-4 list-disc">
+                  <% sale.sale_items.each do |item| %>
+                    <li><%= item.product_name %> ×<%= item.quantity.to_f %> = $<%= item.line_total.to_i %></li>
+                  <% end %>
+                </ul>
+              </details>
+            </div>
+
+            <div class="text-right">
+              <p class="text-xs text-slate-400 uppercase">Total</p>
+              <p class="text-2xl font-bold text-emerald-400">$ <%= number_with_delimiter(sale.total.to_i, delimiter: ".") %></p>
+              <div class="flex gap-2 mt-3">
+                <%= button_to "Reanudar", resume_pos_sale_path(sale),
+                      method: :post,
+                      class: "px-4 py-2 bg-emerald-600 hover:bg-emerald-700 rounded text-sm font-medium" %>
+                <%= button_to "Descartar", discard_suspended_pos_sale_path(sale),
+                      method: :delete,
+                      data: { turbo_confirm: "¿Descartar esta venta suspendida? Esta acción no se puede deshacer." },
+                      class: "px-4 py-2 bg-slate-700 hover:bg-red-700 rounded text-sm font-medium" %>
+              </div>
+            </div>
+          </div>
+        <% end %>
+      </div>
+    <% else %>
+      <div class="bg-slate-800 rounded-lg p-12 text-center text-slate-500">
+        <p class="text-lg mb-2">No hay ventas suspendidas</p>
+        <p class="text-sm">Cuando suspendas una venta, aparecerá acá.</p>
+      </div>
+    <% end %>
+  </main>
+</div>

@@ -1,0 +1,18 @@
+@startuml
+title Componentes de navegación del catálogo
+skinparam componentStyle uml2
+component "Interfaz POS\nSearchController (JavaScript)" as UI
+component "Pos::ProductsController" as HTTP
+component "Catalog::Navigation" as NAV
+component "NameStrategy / CodeStrategy" as STR
+component "Carrito existente" as CART
+database "PostgreSQL\nProduct / Category / StockReservation" as DB
+UI --> HTTP : HTTP q, category_id, page
+HTTP --> NAV : call()
+NAV --> STR : call(scope, query)
+STR --> DB : relación Active Record
+NAV --> DB : orden + límite + offset
+HTTP --> DB : reservas agrupadas
+HTTP --> UI : JSON products, page, has_more
+UI --> CART : pos:add-product
+@enduml

@@ -1,0 +1,52 @@
+<%= form_with(model: [:admin, category], html: { class: "space-y-5" }) do |f| %>
+  <% if category.errors.any? %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <h3 class="text-sm font-medium text-red-800 mb-2">
+        <%= pluralize(category.errors.count, "error impidió", plural: "errores impidieron") %> guardar la categoría:
+      </h3>
+      <ul class="list-disc list-inside text-sm text-red-700">
+        <% category.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div>
+    <%= f.label :name, "Nombre", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= f.text_field :name,
+          required: true,
+          autofocus: true,
+          class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" %>
+  </div>
+
+  <div>
+    <%= f.label :code, "Código corto", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= f.text_field :code,
+          maxlength: 10,
+          placeholder: "Ej: LAC, BEB, FRU",
+          class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none uppercase font-mono" %>
+    <p class="text-xs text-gray-500 mt-1">Hasta 10 caracteres. Se convierte a mayúsculas automáticamente.</p>
+  </div>
+
+  <div>
+    <%= f.label :position, "Posición", class: "block text-sm font-medium text-gray-700 mb-1" %>
+    <%= f.number_field :position,
+          min: 0,
+          class: "w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" %>
+    <p class="text-xs text-gray-500 mt-1">Orden de aparición. Menor número = aparece primero.</p>
+  </div>
+
+  <div class="flex items-center">
+    <%= f.check_box :active,
+          class: "h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" %>
+    <%= f.label :active, "Categoría activa", class: "ml-2 text-sm text-gray-700" %>
+  </div>
+
+  <div class="flex gap-3 pt-4 border-t border-gray-200">
+    <%= f.submit category.persisted? ? "Guardar cambios" : "Crear categoría",
+          class: "px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg transition cursor-pointer" %>
+    <%= link_to "Cancelar", admin_categories_path,
+          class: "px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 font-medium rounded-lg transition" %>
+  </div>
+<% end %>

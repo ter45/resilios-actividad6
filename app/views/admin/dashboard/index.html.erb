@@ -1,0 +1,212 @@
+<div class="mb-6">
+  <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
+  <p class="text-sm text-gray-500 mt-1">
+    <%= @setting.business_name %> · <%= Date.current.strftime("%A %d de %B de %Y") %>
+  </p>
+</div>
+
+<!-- KPIs principales -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-lg shadow p-5">
+    <p class="text-xs text-gray-500 uppercase">Ventas hoy</p>
+    <p class="text-3xl font-bold text-emerald-700 mt-1">$ <%= number_with_delimiter(@data.sales_today.to_i, delimiter: ".") %></p>
+    <p class="text-xs text-gray-500 mt-1"><%= @data.sales_count_today %> ventas</p>
+    <% if @data.sales_yesterday.positive? %>
+      <% delta = ((@data.sales_today - @data.sales_yesterday) / @data.sales_yesterday * 100).to_i %>
+      <p class="text-xs <%= delta >= 0 ? 'text-green-600' : 'text-red-600' %> mt-1">
+        <%= delta >= 0 ? "▲" : "▼" %> <%= delta.abs %>% vs ayer
+      </p>
+    <% end %>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-5">
+    <p class="text-xs text-gray-500 uppercase">Crédito otorgado hoy</p>
+    <p class="text-3xl font-bold text-orange-700 mt-1">$ <%= number_with_delimiter(@data.credit_today.to_i, delimiter: ".") %></p>
+    <p class="text-xs text-gray-500 mt-1">Nuevos fiados</p>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-5">
+    <p class="text-xs text-gray-500 uppercase">Cobros de fiados hoy</p>
+    <p class="text-3xl font-bold text-blue-700 mt-1">$ <%= number_with_delimiter(@data.payments_today.to_i, delimiter: ".") %></p>
+    <p class="text-xs text-gray-500 mt-1">Abonos recibidos</p>
+  </div>
+
+  <div class="bg-white rounded-lg shadow p-5">
+    <p class="text-xs text-gray-500 uppercase">Deuda total acumulada</p>
+    <p class="text-3xl font-bold text-red-700 mt-1">$ <%= number_with_delimiter(@data.debt_total.to_i, delimiter: ".") %></p>
+    <p class="text-xs text-gray-500 mt-1"><%= @data.open_credits_count %> créditos abiertos</p>
+  </div>
+</div>
+
+<!-- Gráfica 7 días -->
+<div class="bg-white rounded-lg shadow p-5 mb-6">
+  <h3 class="text-sm font-semibold text-gray-700 uppercase mb-4">Ventas últimos 7 días</h3>
+  <% max = [@data.sales_last_7_days.map { |d| d[:total].to_d }.max, 1].max %>
+  <div class="flex items-end gap-2 h-48">
+    <% @data.sales_last_7_days.each do |d| %>
+      <% pct = (d[:total].to_d / max * 100).to_i %>
+      <% is_today = d[:date] == Date.current %>
+      <div class="flex-1 flex flex-col items-center">
+        <div class="text-xs text-gray-500 mb-1">
+          <% if d[:total].positive? %>
+            $<%= (d[:total].to_i / 1000).to_i %>k
+          <% else %>
+            —
+          <% end %>
+        </div>
+        <div class="w-full bg-gray-100 rounded-t flex-1 flex items-end">
+          <div class="w-full <%= is_today ? 'bg-emerald-500' : 'bg-emerald-300' %> rounded-t transition-all"
+               style="height: <%= [pct, 2].max %>%"></div>
+        </div>
+        <div class="text-xs <%= is_today ? 'font-bold text-emerald-700' : 'text-gray-500' %> mt-2">
+          <%= d[:date].strftime("%a %d/%m") %>
+        </div>
+      </div>
+    <% end %>
+  </div>
+</div>
+
+<!-- Grid de 2 columnas: stock + deudores -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+
+  <!-- Stock bajo -->
+  <div class="bg-white rounded-lg shadow">
+    <div class="px-5 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+      <h3 class="text-sm font-semibold text-gray-700 uppercase">Stock crítico</h3>
+      <%= link_to "Ver productos →", admin_products_path, class: "text-xs text-emerald-600 hover:underline" %>
+    </div>
+    <div class="divide-y divide-gray-100">
+      <% if @data.stock_out.any? %>
+        <% @data.stock_out.each do |p| %>
+          <div class="px-5 py-3 flex items-center justify-between bg-red-50">
+            <div>
+              <p class="font-medium text-gray-900"><%= p.name %></p>
+              <p class="text-xs text-gray-500"><%= p.category.name %></p>
+            </div>
+            <span class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded font-medium">Sin stock</span>
+          </div>
+        <% end %>
+      <% end %>
+      <% if @data.stock_low.any? %>
+        <% @data.stock_low.each do |p| %>
+          <div class="px-5 py-3 flex items-center justify-between">
+            <div>
+              <p class="font-medium text-gray-900"><%= p.name %></p>
+              <p class="text-xs text-gray-500"><%= p.category.name %></p>
+            </div>
+            <span class="text-sm font-medium text-orange-600">
+              <%= p.weight_priced? ? "#{p.stock} kg" : p.stock.to_i %>
+            </span>
+          </div>
+        <% end %>
+      <% end %>
+      <% if @data.stock_low.empty? && @data.stock_out.empty? %>
+        <div class="p-8 text-center text-gray-400 text-sm">
+          ✓ Todos los productos tienen stock suficiente
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Top deudores -->
+  <div class="bg-white rounded-lg shadow">
+    <div class="px-5 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+      <h3 class="text-sm font-semibold text-gray-700 uppercase">Clientes con mayor deuda</h3>
+      <%= link_to "Ver créditos →", admin_credits_path, class: "text-xs text-emerald-600 hover:underline" %>
+    </div>
+    <div class="divide-y divide-gray-100">
+      <% if @data.top_debtors.any? %>
+        <% @data.top_debtors.each do |c| %>
+          <div class="px-5 py-3">
+            <div class="flex items-center justify-between mb-1">
+              <p class="font-medium text-gray-900"><%= c.name %></p>
+              <p class="text-sm font-bold text-red-700">$ <%= number_with_delimiter(c.credit_balance.to_i, delimiter: ".") %></p>
+            </div>
+            <% if c.credit_limit.positive? %>
+              <div class="flex items-center gap-2 text-xs text-gray-500">
+                <div class="flex-1 bg-gray-200 rounded-full h-1.5">
+                  <% pct = [c.credit_used_percent, 100].min %>
+                  <div class="<%= pct > 80 ? 'bg-red-500' : (pct > 50 ? 'bg-orange-500' : 'bg-emerald-500') %> h-1.5 rounded-full" style="width: <%= pct %>%"></div>
+                </div>
+                <span><%= c.credit_used_percent %>%</span>
+              </div>
+            <% end %>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="p-8 text-center text-gray-400 text-sm">
+          ✓ Nadie debe nada
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Grid de 2 columnas: top productos + cajas pendientes -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
+
+  <!-- Top productos hoy -->
+  <div class="bg-white rounded-lg shadow">
+    <div class="px-5 py-3 border-b border-gray-200 bg-gray-50">
+      <h3 class="text-sm font-semibold text-gray-700 uppercase">Más vendidos hoy</h3>
+    </div>
+    <div class="divide-y divide-gray-100">
+      <% if @data.top_products_today.any? %>
+        <% @data.top_products_today.each_with_index do |p, i| %>
+          <div class="px-5 py-3 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+              <span class="text-xs font-bold text-gray-400 w-5">#<%= i + 1 %></span>
+              <div>
+                <p class="font-medium text-gray-900"><%= p.product_name %></p>
+                <p class="text-xs text-gray-500">x <%= p.qty.to_f.round(1) %></p>
+              </div>
+            </div>
+            <p class="text-sm font-medium text-emerald-700">$ <%= number_with_delimiter(p.revenue.to_i, delimiter: ".") %></p>
+          </div>
+        <% end %>
+      <% else %>
+        <div class="p-8 text-center text-gray-400 text-sm">
+          Aún no hay ventas hoy
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <!-- Cajas pendientes de cerrar -->
+  <div class="bg-white rounded-lg shadow">
+    <div class="px-5 py-3 border-b border-gray-200 bg-gray-50 flex items-center justify-between">
+      <h3 class="text-sm font-semibold text-gray-700 uppercase">Cajas sin cerrar</h3>
+      <%= link_to "Historial →", admin_cash_closings_path, class: "text-xs text-emerald-600 hover:underline" %>
+    </div>
+    <div class="divide-y divide-gray-100">
+      <% @data.pending_closings.each do |term| %>
+        <div class="px-5 py-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="font-medium text-gray-900">Terminal <%= term[:terminal_id] %></p>
+              <p class="text-xs text-gray-500">
+                Desde <%= term[:opened_at].strftime("%d/%m %H:%M") %>
+              </p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm font-bold <%= term[:sales_count].positive? ? 'text-orange-700' : 'text-gray-400' %>">
+                <%= term[:sales_count] %> <%= term[:sales_count] == 1 ? "venta" : "ventas" %>
+              </p>
+              <p class="text-xs text-gray-500">$ <%= number_with_delimiter(term[:expected_cash].to_i, delimiter: ".") %> esperado</p>
+            </div>
+          </div>
+        </div>
+      <% end %>
+    </div>
+  </div>
+</div>
+
+<!-- Alertas -->
+<% if @data.voided_today.positive? %>
+  <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
+    <p class="text-sm text-yellow-800">
+      <strong>Atención:</strong> Hubo <%= @data.voided_today %> <%= @data.voided_today == 1 ? "venta anulada" : "ventas anuladas" %> hoy.
+      <%= link_to "Ver detalle", admin_sales_path(status: "voided", date: Date.current), class: "underline text-yellow-700 hover:text-yellow-900" %>
+    </p>
+  </div>
+<% end %>

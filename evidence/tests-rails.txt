@@ -1,0 +1,13 @@
+C:/Ruby34-x64/lib/ruby/3.4.0/win32/registry.rb:2: warning: C:/Ruby34-x64/lib/ruby/3.4.0/fiddle/import.rb is found in fiddle, which will no longer be part of the default gems starting from Ruby 3.5.0.
+You can add fiddle to your Gemfile or gemspec to silence this warning.
+≈ tailwindcss v4.2.4
+
+Done in 85ms
+Run options: --seed 17020
+
+# Running:
+
+..............................................
+
+Finished in 2.676750s, 17.1850 runs/s, 135.2386 assertions/s.
+46 runs, 362 assertions, 0 failures, 0 errors, 0 skips

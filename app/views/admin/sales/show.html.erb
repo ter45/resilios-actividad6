@@ -1,0 +1,135 @@
+<div class="mb-6 flex items-center justify-between">
+  <div>
+    <%= link_to "← Volver a ventas", admin_sales_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+    <h2 class="text-2xl font-bold text-gray-900 mt-2"><%= @sale.number %></h2>
+    <p class="text-sm text-gray-500 mt-1"><%= @sale.sold_at&.strftime("%d/%m/%Y %H:%M") %></p>
+  </div>
+  <div>
+    <% if @sale.voided? %>
+      <span class="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-lg">ANULADA</span>
+    <% else %>
+      <span class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded-lg">Completada</span>
+    <% end %>
+  </div>
+</div>
+
+<% if @sale.voided? %>
+  <div class="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+    <h3 class="font-semibold text-red-800 mb-2">Venta anulada</h3>
+    <p class="text-sm text-red-700"><strong>Por:</strong> <%= @sale.voided_by&.display_name %></p>
+    <p class="text-sm text-red-700"><strong>Fecha:</strong> <%= @sale.voided_at&.strftime("%d/%m/%Y %H:%M") %></p>
+    <p class="text-sm text-red-700"><strong>Razón:</strong> <%= @sale.voided_reason %></p>
+  </div>
+<% end %>
+
+<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Cajero</p>
+    <p class="font-medium"><%= @sale.user.display_name %></p>
+    <p class="text-xs text-gray-500 mt-1">Terminal <%= @sale.terminal_id %></p>
+  </div>
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Cliente</p>
+    <p class="font-medium"><%= @sale.display_customer %></p>
+    <% if @sale.customer %>
+      <p class="text-xs text-gray-500 mt-1"><%= @sale.customer.display_document %></p>
+    <% end %>
+  </div>
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Método de pago</p>
+    <p class="font-medium"><%= @sale.payment_method.humanize %></p>
+    <% if @sale.payment_method == "mixed" %>
+      <p class="text-xs text-gray-500 mt-1">
+        Efectivo: $<%= number_with_delimiter(@sale.cash_amount.to_i, delimiter: ".") %> |
+        Crédito: $<%= number_with_delimiter(@sale.credit_amount.to_i, delimiter: ".") %>
+      </p>
+    <% end %>
+  </div>
+</div>
+
+<%= link_to "Imprimir ticket (Windows / térmica)", receipt_admin_sale_path(@sale), class: "inline-block mb-4 px-4 py-2 bg-emerald-600 text-white rounded-lg" %>
+<!-- Items -->
+<div class="bg-white rounded-lg shadow overflow-hidden mb-6">
+  <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+    <h3 class="font-semibold text-gray-700">Productos vendidos</h3>
+  </div>
+  <table class="w-full">
+    <thead class="bg-gray-50 border-b border-gray-200">
+      <tr>
+        <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">#</th>
+        <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">Producto</th>
+        <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">SKU</th>
+        <th class="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">Cantidad</th>
+        <th class="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">Precio</th>
+        <th class="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">IVA</th>
+        <th class="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">Total línea</th>
+      </tr>
+    </thead>
+    <tbody class="divide-y divide-gray-200">
+      <% @items.each do |item| %>
+        <tr>
+          <td class="px-4 py-2 text-sm text-gray-500"><%= item.position %></td>
+          <td class="px-4 py-2 text-sm font-medium"><%= item.product_name %></td>
+          <td class="px-4 py-2 text-xs font-mono text-gray-500"><%= item.product_sku || "—" %></td>
+          <td class="px-4 py-2 text-sm text-right"><%= item.display_quantity %></td>
+          <td class="px-4 py-2 text-sm text-right">$ <%= number_with_delimiter(item.unit_price.to_i, delimiter: ".") %></td>
+          <td class="px-4 py-2 text-sm text-right text-gray-500">$ <%= number_with_delimiter(item.line_tax.to_i, delimiter: ".") %></td>
+          <td class="px-4 py-2 text-sm text-right font-medium">$ <%= number_with_delimiter(item.line_total.to_i, delimiter: ".") %></td>
+        </tr>
+      <% end %>
+    </tbody>
+    <tfoot class="bg-gray-50">
+      <tr>
+        <td colspan="6" class="px-4 py-2 text-right text-sm text-gray-600">Subtotal</td>
+        <td class="px-4 py-2 text-right text-sm">$ <%= number_with_delimiter(@sale.subtotal.to_i, delimiter: ".") %></td>
+      </tr>
+      <tr>
+        <td colspan="6" class="px-4 py-2 text-right text-sm text-gray-600">IVA</td>
+        <td class="px-4 py-2 text-right text-sm">$ <%= number_with_delimiter(@sale.tax_total.to_i, delimiter: ".") %></td>
+      </tr>
+      <% if @sale.discount_total.positive? %>
+        <tr>
+          <td colspan="6" class="px-4 py-2 text-right text-sm text-gray-600">Descuento</td>
+          <td class="px-4 py-2 text-right text-sm">- $ <%= number_with_delimiter(@sale.discount_total.to_i, delimiter: ".") %></td>
+        </tr>
+      <% end %>
+      <tr class="border-t-2 border-gray-300">
+        <td colspan="6" class="px-4 py-3 text-right font-bold">Total</td>
+        <td class="px-4 py-3 text-right font-bold text-lg">$ <%= number_with_delimiter(@sale.total.to_i, delimiter: ".") %></td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<% unless @sale.voided? %>
+  <div class="bg-white rounded-lg shadow p-4 mb-6 flex items-center justify-between">
+    <div>
+      <p class="text-sm text-gray-700"><strong>Ticket ESC/POS</strong> listo para impresora térmica.</p>
+      <p class="text-xs text-gray-500 mt-1">Archivo binario para Print Bridge o impresoras directas.</p>
+    </div>
+    <%= link_to "Descargar ticket", ticket_admin_sale_path(@sale),
+          class: "px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg font-medium" %>
+  </div>
+<% end %>
+
+<!-- Anular -->
+<% if policy(@sale).void? && @sale.voidable? %>
+  <div class="bg-white rounded-lg shadow p-6"
+       data-controller="void-sale">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase mb-3">Anular esta venta</h3>
+    <p class="text-xs text-gray-500 mb-3">
+      La anulación restaura el stock de los productos. Si era venta a crédito, se descuenta del saldo del cliente. Esta acción queda registrada con auditoría.
+    </p>
+    <%= form_with url: void_admin_sale_path(@sale), method: :patch, local: true, class: "space-y-3" do %>
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Razón de anulación (obligatorio)</label>
+        <%= text_area_tag :reason, "", rows: 2, required: true,
+              placeholder: "Ej: Error al cobrar, cliente devolvió producto, etc.",
+              class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 outline-none" %>
+      </div>
+      <%= submit_tag "Anular venta",
+            data: { turbo_confirm: "¿Confirmar anulación de la venta #{@sale.number}? Esta acción no se puede deshacer." },
+            class: "px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg font-medium cursor-pointer" %>
+    <% end %>
+  </div>
+<% end %>

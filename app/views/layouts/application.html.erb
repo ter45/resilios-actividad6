@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title><%= content_for(:title) || "ResiliOS POS" %></title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="application-name" content="ResiliOS POS">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+
+    <%= yield :head %>
+
+    <link rel="icon" href="/icon.png" type="image/png">
+    <link rel="icon" href="/icon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="/icon.png">
+
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+
+  <body class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 flex items-center justify-center p-4">
+    <% if notice %>
+      <div class="fixed top-4 right-4 bg-green-500 text-white px-4 py-2 rounded shadow-lg">
+        <%= notice %>
+      </div>
+    <% end %>
+    <% if alert %>
+      <div class="fixed top-4 right-4 bg-red-500 text-white px-4 py-2 rounded shadow-lg">
+        <%= alert %>
+      </div>
+    <% end %>
+
+    <%= yield %>
+  </body>
+</html>

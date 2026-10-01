@@ -1,0 +1,14 @@
+<div class="min-h-screen flex items-center justify-center">
+  <div class="text-center">
+    <h1 class="text-4xl font-bold mb-4">POS — <%= current_user.display_name %></h1>
+    <p class="text-emerald-200 mb-2">
+      Terminal: <%= current_user.terminal_assigned || "—" %>
+    </p>
+    <p class="text-emerald-300 text-sm mt-4">
+      Pantalla de venta — se completa en el Día 8
+    </p>
+    <%= button_to "Cerrar sesión", destroy_user_session_path,
+          method: :delete,
+          class: "mt-8 px-6 py-3 bg-emerald-700 hover:bg-emerald-600 rounded text-white" %>
+  </div>
+</div>

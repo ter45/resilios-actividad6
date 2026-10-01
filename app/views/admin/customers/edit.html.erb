@@ -1,0 +1,9 @@
+<div class="mb-6">
+  <%= link_to "← Volver", admin_customers_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+  <h2 class="text-2xl font-bold text-gray-900 mt-2">Editar cliente</h2>
+  <p class="text-sm text-gray-500 mt-1"><%= @customer.name %></p>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6 max-w-3xl">
+  <%= render "form", customer: @customer %>
+</div>

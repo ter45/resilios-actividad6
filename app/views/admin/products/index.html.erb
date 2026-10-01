@@ -1,0 +1,121 @@
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="text-2xl font-bold text-gray-900">Productos</h2>
+    <p class="text-sm text-gray-500 mt-1"><%= pluralize(@products.size, "producto") %> mostrados</p>
+  </div>
+  <% if policy(Product).create? %>
+    <%= link_to "+ Nuevo producto", new_admin_product_path,
+          class: "px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition" %>
+  <% end %>
+</div>
+
+<%= form_with url: admin_products_path, method: :get, local: true, class: "bg-white rounded-lg shadow p-4 mb-4 flex gap-3 items-end" do %>
+  <div class="flex-1">
+    <label class="block text-xs font-medium text-gray-600 mb-1">Buscar</label>
+    <%= text_field_tag :q, params[:q],
+          placeholder: "Nombre, código o SKU",
+          class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" %>
+  </div>
+  <div class="w-56">
+    <label class="block text-xs font-medium text-gray-600 mb-1">Categoría</label>
+    <%= select_tag :category_id,
+          options_from_collection_for_select(@categories, :id, :name, params[:category_id]),
+          include_blank: "Todas",
+          class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white" %>
+  </div>
+  <%= submit_tag "Filtrar", class: "px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg font-medium cursor-pointer" %>
+  <% if params[:q].present? || params[:category_id].present? %>
+    <%= link_to "Limpiar", admin_products_path, class: "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium" %>
+  <% end %>
+<% end %>
+
+<div class="bg-white rounded-lg shadow overflow-hidden">
+  <% if @products.any? %>
+    <table class="w-full">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Producto</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Categoría</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Código</th>
+          <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Precio</th>
+          <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Stock</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Estado</th>
+          <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @products.each do |product| %>
+          <tr class="<%= product.discarded? ? 'bg-red-50 opacity-60' : (product.active? ? '' : 'bg-gray-50') %>">
+            <td class="px-4 py-3">
+              <div class="font-medium text-gray-900"><%= product.name %></div>
+              <% if product.weight_priced? %>
+                <span class="text-xs px-2 py-0.5 bg-amber-100 text-amber-700 rounded mt-1 inline-block">PESADO</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 text-sm text-gray-600"><%= product.category.name %></td>
+            <td class="px-4 py-3 text-xs font-mono text-gray-600">
+              <% if product.barcode.present? %>
+                <div><%= product.barcode %></div>
+              <% end %>
+              <% if product.sku.present? %>
+                <div class="text-gray-400"><%= product.sku %></div>
+              <% end %>
+              <% if product.barcode.blank? && product.sku.blank? %>
+                <span class="text-gray-300">—</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 text-right text-sm font-medium text-gray-900">
+              <%= product.display_price %><%= product.weight_priced? ? "/kg" : "" %>
+            </td>
+            <td class="px-4 py-3 text-right text-sm <%= product.in_stock? ? 'text-gray-700' : 'text-red-600 font-medium' %>">
+              <%= product.weight_priced? ? "#{product.stock} kg" : product.stock.to_i %>
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <% if product.discarded? %>
+                <span class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">Eliminado</span>
+              <% elsif product.active? %>
+                <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">Activo</span>
+              <% else %>
+                <span class="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded">Inactivo</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 text-sm text-right space-x-1">
+              <% unless product.discarded? %>
+                <% if policy(product).toggle_active? %>
+                  <%= button_to product.active? ? "Desactivar" : "Activar",
+                        toggle_active_admin_product_path(product),
+                        method: :patch,
+                        class: "text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" %>
+                <% end %>
+                <% if policy(product).update? %>
+                  <%= link_to "Editar", edit_admin_product_path(product),
+                        class: "text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded" %>
+                <% end %>
+                <% if policy(product).destroy? %>
+                  <%= button_to "Eliminar",
+                        admin_product_path(product),
+                        method: :delete,
+                        form: { data: { turbo_confirm: "¿Eliminar el producto \"#{product.name}\"?" } },
+                        class: "text-xs px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded" %>
+                <% end %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="p-12 text-center text-gray-500">
+      <% if params[:q].present? || params[:category_id].present? %>
+        <p>No hay productos que coincidan con los filtros.</p>
+        <%= link_to "Quitar filtros", admin_products_path, class: "inline-block mt-2 text-emerald-600 hover:underline" %>
+      <% else %>
+        <p>No hay productos todavía.</p>
+        <% if policy(Product).create? %>
+          <%= link_to "Crear el primero", new_admin_product_path,
+                class: "inline-block mt-4 text-emerald-600 hover:underline" %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

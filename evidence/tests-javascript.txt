@@ -1,0 +1,19 @@
+✔ bridge: volver a cero elimina el peso anterior (1.2283ms)
+✔ bridge: mensaje sin peso conserva la lectura (0.1269ms)
+✔ interpreta gramos y coma decimal (0.2539ms)
+✔ serial: espera lineas completas y propaga el cero (3.5174ms)
+✔ una respuesta antigua no reemplaza una búsqueda reciente (2.5251ms)
+✔ escribir invalida inmediatamente la solicitud anterior antes del debounce (1.8816ms)
+✔ paginación conserva texto y categoría y habilita controles (1.0492ms)
+✔ nombres se representan como texto y los productos agotados no se seleccionan (0.6277ms)
+✔ selección conserva el producto por peso enviado al carrito (0.5675ms)
+✔ escaneo sin stock no agrega al carrito (0.7059ms)
+✔ error HTTP libera controles y muestra mensaje (0.7047ms)
+ℹ tests 11
+ℹ suites 0
+ℹ pass 11
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 97.5783

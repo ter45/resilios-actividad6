@@ -1,0 +1,110 @@
+<div class="mb-6">
+  <%= link_to "← Volver a créditos", admin_credits_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+  <h2 class="text-2xl font-bold text-gray-900 mt-2">Crédito de <%= @credit.customer.name %></h2>
+  <p class="text-sm text-gray-500 mt-1">
+    Venta <%= link_to @credit.sale.number, admin_sale_path(@credit.sale), class: "text-blue-600 hover:underline" %>
+    · Creado el <%= @credit.created_at.strftime("%d/%m/%Y %H:%M") %>
+  </p>
+</div>
+
+<!-- Resumen del crédito -->
+<div class="bg-white rounded-lg shadow p-6 mb-6">
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+    <div>
+      <p class="text-xs text-gray-500 uppercase">Monto original</p>
+      <p class="text-2xl font-bold text-gray-900"><%= @credit.display_amount %></p>
+    </div>
+    <div>
+      <p class="text-xs text-gray-500 uppercase">Saldo pendiente</p>
+      <p class="text-2xl font-bold <%= @credit.paid? ? 'text-green-700' : 'text-red-700' %>"><%= @credit.display_balance %></p>
+    </div>
+    <div>
+      <p class="text-xs text-gray-500 uppercase">Pagado</p>
+      <p class="text-lg font-medium text-emerald-700">$ <%= number_with_delimiter(@credit.total_paid.to_i, delimiter: ".") %></p>
+      <p class="text-xs text-gray-500"><%= @credit.paid_percent %>%</p>
+    </div>
+    <div>
+      <p class="text-xs text-gray-500 uppercase">Estado</p>
+      <% if @credit.paid? %>
+        <span class="px-3 py-1 text-sm bg-green-100 text-green-700 rounded">PAGADO</span>
+        <p class="text-xs text-gray-500 mt-1">El <%= @credit.paid_at&.strftime("%d/%m %H:%M") %></p>
+      <% else %>
+        <span class="px-3 py-1 text-sm bg-orange-100 text-orange-700 rounded">ABIERTO</span>
+      <% end %>
+    </div>
+  </div>
+
+  <div class="mt-4">
+    <div class="w-full bg-gray-200 rounded-full h-3">
+      <% pct = @credit.paid_percent.to_f %>
+      <div class="<%= pct == 100 ? 'bg-green-500' : (pct > 50 ? 'bg-emerald-500' : 'bg-orange-500') %> h-3 rounded-full transition-all" style="width: <%= pct %>%"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Aplicar abono (solo si está abierto) -->
+<% if @credit.open? && policy(@credit).pay? %>
+  <div class="bg-white rounded-lg shadow p-6 mb-6">
+    <h3 class="text-sm font-semibold text-gray-700 uppercase mb-3">Registrar abono</h3>
+    <%= form_with url: pay_admin_credit_path(@credit), method: :post, local: true, class: "space-y-3" do %>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Monto (COP)</label>
+          <%= number_field_tag :amount, "",
+                step: 100, min: 1, max: @credit.balance.to_i,
+                required: true,
+                placeholder: "Hasta #{@credit.balance.to_i}",
+                class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" %>
+        </div>
+        <div>
+          <label class="block text-xs font-medium text-gray-700 mb-1">Terminal</label>
+          <%= select_tag :terminal_id,
+                options_for_select([["A", "A"], ["B", "B"]], current_user.terminal_assigned || "A"),
+                class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white" %>
+        </div>
+      </div>
+      <div>
+        <label class="block text-xs font-medium text-gray-700 mb-1">Observaciones (opcional)</label>
+        <%= text_field_tag :notes, "",
+              placeholder: "Ej: paga la mitad, completa la semana próxima",
+              class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" %>
+      </div>
+      <%= submit_tag "Registrar abono",
+            data: { turbo_confirm: "¿Confirmar abono?" },
+            class: "px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg cursor-pointer" %>
+    <% end %>
+  </div>
+<% end %>
+
+<!-- Historial de pagos -->
+<div class="bg-white rounded-lg shadow overflow-hidden">
+  <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+    <h3 class="font-semibold text-gray-700">Historial de abonos (<%= @payments.size %>)</h3>
+  </div>
+  <% if @payments.any? %>
+    <table class="w-full">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">Fecha</th>
+          <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">Cajero</th>
+          <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">Terminal</th>
+          <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">Observaciones</th>
+          <th class="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">Monto</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @payments.each do |p| %>
+          <tr>
+            <td class="px-4 py-2 text-sm text-gray-600"><%= p.paid_at.strftime("%d/%m/%Y %H:%M") %></td>
+            <td class="px-4 py-2 text-sm"><%= p.user.display_name %></td>
+            <td class="px-4 py-2 text-sm"><%= p.terminal_id %></td>
+            <td class="px-4 py-2 text-sm text-gray-600"><%= p.notes.presence || "—" %></td>
+            <td class="px-4 py-2 text-right text-sm font-medium"><%= p.display_amount %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="p-6 text-sm text-gray-500">Sin abonos registrados.</p>
+  <% end %>
+</div>

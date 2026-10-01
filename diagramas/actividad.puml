@@ -1,0 +1,27 @@
+@startuml
+title Actividad de navegación ordinaria
+start
+:Recibir texto, categoría y página;
+:Aplicar estado vendible y categoría;
+if (¿Existe código exacto en el alcance?) then (sí)
+  :Elegir CodeStrategy;
+else (no)
+  :Elegir NameStrategy;
+endif
+:Ordenar por nombre e id;
+:Consultar hasta 41 filas;
+:Separar 40 resultados y has_more;
+:Agrupar reservas activas;
+:Responder JSON;
+if (¿La solicitud sigue vigente?) then (sí)
+  if (¿Hay productos?) then (sí)
+    :Mostrar página y controles;
+    :Permitir selección de productos disponibles;
+  else (no)
+    :Mostrar Sin resultados;
+  endif
+else (no)
+  :Descartar respuesta antigua;
+endif
+stop
+@enduml

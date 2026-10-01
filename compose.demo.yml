@@ -1,0 +1,38 @@
+name: actividad6-resilios
+services:
+  db:
+    image: postgres:17-alpine
+    command: ["postgres", "-p", "55436"]
+    environment:
+      POSTGRES_USER: resilios
+      POSTGRES_PASSWORD: activity-local-only
+      POSTGRES_DB: resilios_pos_test
+    volumes:
+      - demo_db:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U resilios -d resilios_pos_test -p 55436"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  web:
+    image: resilios-actividad6:local
+    build: .
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - "bundle exec rails tailwindcss:build && bundle exec rails db:prepare && bundle exec rails runner script/activity_demo.rb && bundle exec rails server -b 0.0.0.0 -p 3000 --pid /tmp/actividad6-server.pid"
+    environment:
+      RAILS_ENV: test
+      ACTIVITY_DEMO_RUNTIME: "1"
+      DB_HOST: db
+      DB_PORT: "55436"
+      DB_USERNAME: resilios
+      DB_PASSWORD: activity-local-only
+    ports:
+      - "127.0.0.1:3036:3000"
+    volumes:
+      - .:/rails
+    depends_on:
+      db:
+        condition: service_healthy
+volumes:
+  demo_db:

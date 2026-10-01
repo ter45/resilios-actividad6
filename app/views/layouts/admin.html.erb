@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <title>ResiliOS POS — Admin</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <%= csrf_meta_tags %>
+    <%= csp_meta_tag %>
+    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= javascript_importmap_tags %>
+  </head>
+  <body class="bg-gray-100">
+    <% if notice %>
+      <div class="bg-green-100 border border-green-300 text-green-800 px-4 py-2 text-center">
+        <%= notice %>
+      </div>
+    <% end %>
+    <% if alert %>
+      <div class="bg-red-100 border border-red-300 text-red-800 px-4 py-2 text-center">
+        <%= alert %>
+      </div>
+    <% end %>
+
+    <div class="min-h-screen flex">
+      <aside class="w-40 md:w-64 shrink-0 bg-slate-900 text-white flex flex-col">
+        <div class="p-6 border-b border-slate-700">
+          <h1 class="text-xl font-bold">ResiliOS POS</h1>
+          <p class="text-xs text-slate-400 mt-1">Admin</p>
+        </div>
+        <nav class="p-4 space-y-1 flex-1">
+          <%= link_to "Dashboard", admin_root_path,
+                class: "block px-3 py-2 rounded #{current_page?(admin_root_path) ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-300'}" %>
+          <%= link_to "Créditos", admin_credits_path,
+                class: "block px-3 py-2 rounded #{request.path.start_with?('/admin/credits') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-300'}" %>
+          <%= link_to "Cierres de caja", admin_cash_closings_path,
+                class: "block px-3 py-2 rounded #{request.path.start_with?('/admin/cash_closings') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-300'}" %>
+          <%= link_to "Ventas", admin_sales_path,
+                class: "block px-3 py-2 rounded #{request.path.start_with?('/admin/sales') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-300'}" %>
+          <div class="pt-3 mt-3 border-t border-slate-700">
+            <p class="text-xs uppercase text-slate-500 px-3 mb-1">Catálogo</p>
+            <%= link_to "Categorías", admin_categories_path,
+                  class: "block px-3 py-2 rounded #{request.path.start_with?('/admin/categories') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-300'}" %>
+            <%= link_to "Productos", admin_products_path,
+                  class: "block px-3 py-2 rounded #{request.path.start_with?('/admin/products') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-300'}" %>
+          </div>
+          <div class="pt-3 mt-3 border-t border-slate-700">
+            <p class="text-xs uppercase text-slate-500 px-3 mb-1">Personas</p>
+            <%= link_to "Clientes", admin_customers_path,
+                  class: "block px-3 py-2 rounded #{request.path.start_with?('/admin/customers') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-300'}" %>
+          </div>
+  <div class="pt-3 mt-3 border-t border-slate-700">
+    <p class="text-xs uppercase text-slate-500 px-3 mb-1">Sistema</p>
+    <% if policy(User).index? %>
+      <%= link_to "Usuarios", admin_users_path,
+            class: "block px-3 py-2 rounded #{request.path.start_with?('/admin/users') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-300'}" %>
+    <% end %>
+    <%= link_to "Configuración", edit_admin_setting_path,
+          class: "block px-3 py-2 rounded #{request.path.start_with?('/admin/setting') ? 'bg-slate-800 text-white' : 'hover:bg-slate-800 text-slate-300'}" %>
+  </div>
+</nav>
+
+        <div class="p-4 border-t border-slate-700 text-sm">
+          <p class="text-slate-300"><%= current_user.display_name %></p>
+          <p class="text-xs text-slate-500"><%= current_user.role.humanize %></p>
+          <%= button_to "Cerrar sesión", destroy_user_session_path,
+                method: :delete,
+                class: "mt-2 text-red-400 hover:text-red-300 text-sm" %>
+        </div>
+      </aside>
+
+      <main class="flex-1 min-w-0 p-4 md:p-8">
+        <%= yield %>
+      </main>
+    </div>
+  </body>
+</html>

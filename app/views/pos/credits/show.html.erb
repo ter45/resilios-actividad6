@@ -1,0 +1,116 @@
+<div class="min-h-screen bg-slate-900 text-white"
+     data-controller="credit-payment"
+     data-credit-payment-credit-id-value="<%= @credit.id %>"
+     data-credit-payment-balance-value="<%= @credit.balance.to_i %>">
+
+  <header class="bg-slate-800 px-6 py-3 flex items-center justify-between border-b border-slate-700">
+    <div class="flex items-center gap-4">
+      <h1 class="text-lg font-bold">Cobrar abono</h1>
+      <span class="text-xs px-2 py-1 bg-emerald-700 rounded">Terminal <%= current_user.terminal_assigned || "A" %></span>
+      <span class="text-xs text-slate-400"><%= current_user.display_name %></span>
+    </div>
+    <%= link_to "← Volver a la lista", pos_credits_path, class: "text-sm text-slate-300 hover:text-white" %>
+  </header>
+
+  <main class="max-w-3xl mx-auto p-8 space-y-6">
+
+    <!-- Datos del cliente -->
+    <div class="bg-slate-800 rounded-lg p-6">
+      <h2 class="text-2xl font-bold"><%= @credit.customer.name %></h2>
+      <p class="text-sm text-slate-400 mt-1">
+        <%= @credit.customer.display_document %> · <%= @credit.customer.phone.presence || "Sin teléfono" %>
+      </p>
+      <p class="text-xs text-slate-500 mt-2">
+        Venta original: <%= @credit.sale.number %> · <%= @credit.created_at.strftime("%d/%m/%Y %H:%M") %>
+      </p>
+    </div>
+
+    <!-- Saldos -->
+    <div class="grid grid-cols-3 gap-4">
+      <div class="bg-slate-800 rounded-lg p-4">
+        <p class="text-xs text-slate-400 uppercase">Monto original</p>
+        <p class="text-xl font-bold mt-1"><%= @credit.display_amount %></p>
+      </div>
+      <div class="bg-slate-800 rounded-lg p-4">
+        <p class="text-xs text-slate-400 uppercase">Pagado</p>
+        <p class="text-xl font-bold text-emerald-400 mt-1">$ <%= number_with_delimiter(@credit.total_paid.to_i, delimiter: ".") %></p>
+      </div>
+      <div class="bg-orange-900/40 border border-orange-700 rounded-lg p-4">
+        <p class="text-xs text-orange-300 uppercase">Saldo pendiente</p>
+        <p class="text-2xl font-bold text-orange-400 mt-1" data-credit-payment-target="balanceText"><%= @credit.display_balance %></p>
+      </div>
+    </div>
+
+    <!-- Form de cobro (solo si está abierto) -->
+    <% if @credit.open? %>
+      <div class="bg-slate-800 rounded-lg p-6">
+        <h3 class="text-lg font-semibold mb-4">Registrar abono</h3>
+
+        <div class="space-y-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-1">Monto a cobrar (COP)</label>
+            <input type="number"
+                   data-credit-payment-target="amountInput"
+                   step="100"
+                   min="1"
+                   max="<%= @credit.balance.to_i %>"
+                   placeholder="0"
+                   class="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-2xl font-bold focus:ring-2 focus:ring-emerald-500 outline-none">
+            <p class="text-xs text-slate-500 mt-1">Máximo: $ <%= number_with_delimiter(@credit.balance.to_i, delimiter: ".") %></p>
+          </div>
+
+          <div class="grid grid-cols-4 gap-2">
+            <button type="button" data-action="click->credit-payment#setAmount" data-amount="5000" class="py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm">$ 5.000</button>
+            <button type="button" data-action="click->credit-payment#setAmount" data-amount="10000" class="py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm">$ 10.000</button>
+            <button type="button" data-action="click->credit-payment#setAmount" data-amount="20000" class="py-2 bg-slate-700 hover:bg-slate-600 rounded text-sm">$ 20.000</button>
+            <button type="button" data-action="click->credit-payment#payFull" class="py-2 bg-emerald-700 hover:bg-emerald-800 rounded text-sm font-semibold">Saldo total</button>
+          </div>
+
+          <div>
+            <label class="block text-sm font-medium text-slate-300 mb-1">Observaciones (opcional)</label>
+            <input type="text"
+                   data-credit-payment-target="notesInput"
+                   placeholder="Ej: completa la semana próxima"
+                   class="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 outline-none">
+          </div>
+
+          <div data-credit-payment-target="errorBox" class="hidden bg-red-900/50 border border-red-700 rounded p-2 text-xs text-red-200"></div>
+
+          <button data-credit-payment-target="submitButton"
+                  data-action="click->credit-payment#submit"
+                  class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed">
+            Confirmar abono
+          </button>
+        </div>
+      </div>
+    <% else %>
+      <div class="bg-green-900/40 border border-green-700 rounded-lg p-6 text-center">
+        <p class="text-xl font-bold text-green-400">CRÉDITO PAGADO</p>
+        <p class="text-sm text-green-300 mt-2">Liquidado el <%= @credit.paid_at&.strftime("%d/%m/%Y %H:%M") %></p>
+      </div>
+    <% end %>
+
+    <!-- Historial -->
+    <% if @payments.any? %>
+      <div class="bg-slate-800 rounded-lg overflow-hidden">
+        <div class="px-4 py-3 border-b border-slate-700">
+          <h3 class="font-semibold">Historial de abonos (<%= @payments.size %>)</h3>
+        </div>
+        <table class="w-full text-sm">
+          <tbody class="divide-y divide-slate-700">
+            <% @payments.each do |p| %>
+              <tr>
+                <td class="px-4 py-2 text-slate-400"><%= p.paid_at.strftime("%d/%m %H:%M") %></td>
+                <td class="px-4 py-2"><%= p.user.display_name %></td>
+                <td class="px-4 py-2 text-slate-400">Term <%= p.terminal_id %></td>
+                <td class="px-4 py-2 text-right font-medium"><%= p.display_amount %></td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </main>
+</div>
+
+<%= csrf_meta_tags %>

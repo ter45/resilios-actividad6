@@ -1,0 +1,29 @@
+services:
+  db:
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_PASSWORD: resilios_dev
+
+  app:
+    build:
+      context: .
+      target: build
+    environment:
+      RAILS_ENV: development
+      DB_PASSWORD: resilios_dev
+      SECRET_KEY_BASE: dummy_for_dev
+    volumes:
+      - .:/rails
+      - bundle_cache:/usr/local/bundle
+    ports:
+      - "3000:3000"
+    command: ./bin/rails server -b 0.0.0.0
+    tty: true
+    stdin_open: true
+
+  nginx:
+    profiles: ["production"]
+
+volumes:
+  bundle_cache:

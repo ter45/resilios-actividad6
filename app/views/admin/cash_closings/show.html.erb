@@ -1,0 +1,98 @@
+<div class="mb-6">
+  <%= link_to "← Volver a cierres", admin_cash_closings_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+  <h2 class="text-2xl font-bold text-gray-900 mt-2">Cierre del <%= @closing.closed_at.strftime("%d/%m/%Y a las %H:%M") %></h2>
+  <p class="text-sm text-gray-500 mt-1">Terminal <%= @closing.terminal_id %> · <%= @closing.user.display_name %></p>
+</div>
+
+<!-- Diferencia destacada -->
+<div class="<%= @closing.shortage? ? 'bg-red-50 border-red-200' : (@closing.surplus? ? 'bg-yellow-50 border-yellow-200' : 'bg-emerald-50 border-emerald-200') %> border rounded-lg p-6 mb-6">
+  <div class="flex items-center justify-between">
+    <div>
+      <p class="text-xs uppercase <%= @closing.shortage? ? 'text-red-700' : (@closing.surplus? ? 'text-yellow-700' : 'text-emerald-700') %>">
+        <%= @closing.balanced? ? "Caja cuadrada" : (@closing.shortage? ? "Faltante" : "Sobrante") %>
+      </p>
+      <p class="text-3xl font-bold mt-1 <%= @closing.shortage? ? 'text-red-700' : (@closing.surplus? ? 'text-yellow-700' : 'text-emerald-700') %>">
+        <%= @closing.display_difference %>
+      </p>
+    </div>
+    <div class="text-right text-sm">
+      <p class="text-gray-600">Esperado: <strong>$ <%= number_with_delimiter(@closing.expected_cash.to_i, delimiter: ".") %></strong></p>
+      <p class="text-gray-600">Contado: <strong>$ <%= number_with_delimiter(@closing.counted_cash.to_i, delimiter: ".") %></strong></p>
+    </div>
+  </div>
+</div>
+
+<!-- Detalles del turno -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Apertura</p>
+    <p class="font-medium"><%= @closing.opened_at.strftime("%d/%m %H:%M") %></p>
+  </div>
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Cierre</p>
+    <p class="font-medium"><%= @closing.closed_at.strftime("%d/%m %H:%M") %></p>
+  </div>
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Duración</p>
+    <p class="font-medium"><%= @closing.duration_minutes %> min</p>
+  </div>
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Ventas</p>
+    <p class="font-medium"><%= @closing.sales_count %> <% if @closing.voided_count.positive? %><span class="text-xs text-red-600">(+<%= @closing.voided_count %> anuladas)</span><% end %></p>
+  </div>
+</div>
+
+<!-- Crédito -->
+<% if @closing.credit_total.positive? %>
+  <div class="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-6">
+    <p class="text-sm text-orange-800">
+      <strong>Crédito otorgado en el turno:</strong> $ <%= number_with_delimiter(@closing.credit_total.to_i, delimiter: ".") %>
+      <span class="text-xs text-orange-600 ml-2">(no afecta el efectivo de caja)</span>
+    </p>
+  </div>
+<% end %>
+
+<!-- Notas -->
+<% if @closing.notes.present? %>
+  <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+    <p class="text-xs text-blue-700 uppercase mb-2">Observaciones del cajero</p>
+    <p class="text-sm text-blue-900"><%= simple_format(@closing.notes) %></p>
+  </div>
+<% end %>
+
+<!-- Ventas del periodo -->
+<div class="bg-white rounded-lg shadow overflow-hidden">
+  <div class="px-4 py-3 border-b border-gray-200 bg-gray-50">
+    <h3 class="font-semibold text-gray-700">Ventas del periodo (<%= @sales_in_period.size %>)</h3>
+  </div>
+  <% if @sales_in_period.any? %>
+    <table class="w-full">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">Número</th>
+          <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">Hora</th>
+          <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">Cliente</th>
+          <th class="text-left px-4 py-2 text-xs font-medium text-gray-500 uppercase">Método</th>
+          <th class="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">Efectivo</th>
+          <th class="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">Crédito</th>
+          <th class="text-right px-4 py-2 text-xs font-medium text-gray-500 uppercase">Total</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @sales_in_period.each do |sale| %>
+          <tr>
+            <td class="px-4 py-2 text-sm font-mono"><%= link_to sale.number, admin_sale_path(sale), class: "text-blue-600 hover:underline" %></td>
+            <td class="px-4 py-2 text-sm text-gray-600"><%= sale.sold_at.strftime("%H:%M") %></td>
+            <td class="px-4 py-2 text-sm"><%= sale.display_customer %></td>
+            <td class="px-4 py-2 text-sm"><%= sale.payment_method.humanize %></td>
+            <td class="px-4 py-2 text-right text-sm">$ <%= number_with_delimiter(sale.cash_amount.to_i, delimiter: ".") %></td>
+            <td class="px-4 py-2 text-right text-sm"><%= sale.credit_amount.positive? ? "$ #{number_with_delimiter(sale.credit_amount.to_i, delimiter: '.')}" : "—" %></td>
+            <td class="px-4 py-2 text-right text-sm font-medium">$ <%= number_with_delimiter(sale.total.to_i, delimiter: ".") %></td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <p class="p-6 text-sm text-gray-500">Sin ventas en este periodo.</p>
+  <% end %>
+</div>

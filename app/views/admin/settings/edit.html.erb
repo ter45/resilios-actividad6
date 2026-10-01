@@ -1,0 +1,99 @@
+<div class="mb-6">
+  <h2 class="text-2xl font-bold text-gray-900">Configuración del negocio</h2>
+  <p class="text-sm text-gray-500 mt-1">Configura los datos y el logo que aparecen en los tickets de venta.</p>
+</div>
+
+<%= form_with(model: @setting, url: admin_setting_path, method: :patch, html: { class: "bg-white rounded-lg shadow p-6 space-y-5 max-w-3xl" }) do |f| %>
+  <% if @setting.errors.any? %>
+    <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+      <h3 class="text-sm font-medium text-red-800 mb-2">
+        <%= pluralize(@setting.errors.count, "error") %> al guardar:
+      </h3>
+      <ul class="list-disc list-inside text-sm text-red-700">
+        <% @setting.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="border-b border-gray-200 pb-5">
+    <%= f.label :logo, "Logo del negocio", class: "block text-sm font-medium text-gray-700 mb-2" %>
+    <% if @setting.logo.attached? && @setting.logo.blob.persisted? %>
+      <div class="mb-3">
+        <%= image_tag @setting.logo, alt: "Logo de #{@setting.business_name}", class: "max-h-32 max-w-full object-contain rounded border border-gray-200 p-2 bg-white" %>
+        <p class="text-xs text-gray-500 mt-1">Logo guardado</p>
+      </div>
+    <% end %>
+    <%= f.file_field :logo, accept: "image/png,image/jpeg,image/webp", aria: { describedby: "logo-help" },
+          class: "block w-full text-sm text-gray-700 border border-gray-300 rounded-lg p-2 bg-white" %>
+    <p id="logo-help" class="text-xs text-gray-500 mt-2">PNG, JPG o WebP. Máximo 2 MB. Selecciona un archivo y pulsa Guardar configuración. Si ya hay un logo, se reemplazará. Se imprime en blanco y negro al inicio del ticket.</p>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div class="md:col-span-2">
+      <%= f.label :business_name, "Nombre comercial", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :business_name, required: true, maxlength: 120,
+            class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" %>
+      <p class="text-xs text-gray-500 mt-1">Aparece grande arriba del ticket.</p>
+    </div>
+
+    <div>
+      <%= f.label :legal_name, "Razón social", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :legal_name, maxlength: 200,
+            class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" %>
+    </div>
+
+    <div>
+      <%= f.label :nit, "NIT", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :nit, maxlength: 30,
+            class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" %>
+    </div>
+
+    <div class="md:col-span-2">
+      <%= f.label :address, "Dirección", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :address, maxlength: 200,
+            class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" %>
+    </div>
+
+    <div>
+      <%= f.label :city, "Ciudad", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :city, maxlength: 100,
+            class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" %>
+    </div>
+
+    <div>
+      <%= f.label :phone, "Teléfono", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :phone, maxlength: 50,
+            class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" %>
+    </div>
+
+    <div>
+      <%= f.label :paper_width_mm, "Ancho de papel", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.select :paper_width_mm, [["80 mm (estándar POS)", 80], ["58 mm (compacto)", 58]],
+            {}, class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white" %>
+    </div>
+
+    <div class="flex items-center mt-7">
+      <%= f.check_box :print_barcode, class: "h-4 w-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" %>
+      <%= f.label :print_barcode, "Imprimir código de barras en el ticket", class: "ml-2 text-sm text-gray-700" %>
+    </div>
+
+    <div class="md:col-span-2">
+      <%= f.label :ticket_header, "Texto extra de encabezado (opcional)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :ticket_header, maxlength: 200, placeholder: "Ej: BIENVENIDO A NUESTRA TIENDA",
+            class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" %>
+    </div>
+
+    <div class="md:col-span-2">
+      <%= f.label :ticket_footer, "Texto de pie de ticket", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :ticket_footer, maxlength: 200, placeholder: "Ej: Gracias por su compra — Síganos @donluis",
+            class: "w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none" %>
+    </div>
+  </div>
+
+  <div class="flex gap-3 pt-4 border-t border-gray-200">
+    <%= f.submit "Guardar configuración",
+          class: "px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg cursor-pointer" %>
+  </div>
+<% end %>

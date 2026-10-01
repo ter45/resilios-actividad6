@@ -1,0 +1,27 @@
+@startuml
+title Búsqueda por texto con categoría y página
+actor Cajero
+participant "Interfaz POS" as UI
+participant "ProductsController" as HTTP
+participant "Catalog::Navigation" as NAV
+participant "Estrategia" as STR
+database PostgreSQL as DB
+Cajero -> UI : escribir texto / elegir categoría
+UI -> UI : invalidar petición anterior
+UI -> HTTP : GET search(q, category_id, page)
+HTTP -> HTTP : autenticar usuario
+HTTP -> NAV : call()
+NAV -> DB : comprobar código exacto dentro del alcance
+DB --> NAV : existe / no existe
+NAV -> STR : call(scope, query)
+STR --> NAV : relación filtrada
+NAV -> DB : ORDER BY name, id + OFFSET + LIMIT 41
+DB --> NAV : hasta 41 filas y categorías precargadas
+NAV --> HTTP : Result con hasta 40 productos y has_more
+HTTP -> DB : SUM reservas activas GROUP BY product_id
+DB --> HTTP : cantidades reservadas
+HTTP --> UI : JSON products, page, has_more, strategy
+UI -> UI : comprobar identificador vigente y mostrar
+Cajero -> UI : seleccionar producto disponible
+UI -> UI : emitir pos:add-product hacia carrito
+@enduml

@@ -1,0 +1,125 @@
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="text-2xl font-bold text-gray-900">Ventas</h2>
+    <p class="text-sm text-gray-500 mt-1">Mostrando hasta 200 ventas</p>
+  </div>
+</div>
+
+<!-- Cards de resumen -->
+<div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Ventas completadas</p>
+    <p class="text-2xl font-bold text-gray-900"><%= @totals[:count] %></p>
+  </div>
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Total vendido</p>
+    <p class="text-2xl font-bold text-emerald-700">$ <%= number_with_delimiter(@totals[:total].to_i, delimiter: ".") %></p>
+  </div>
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Efectivo</p>
+    <p class="text-lg font-medium text-gray-700">$ <%= number_with_delimiter(@totals[:cash_total].to_i, delimiter: ".") %></p>
+    <p class="text-xs text-gray-500 mt-1">Crédito: $ <%= number_with_delimiter(@totals[:credit_total].to_i, delimiter: ".") %></p>
+  </div>
+  <div class="bg-white rounded-lg shadow p-4">
+    <p class="text-xs text-gray-500 uppercase">Anuladas</p>
+    <p class="text-2xl font-bold text-red-700"><%= @totals[:voided] %></p>
+  </div>
+</div>
+
+<!-- Filtros -->
+<%= form_with url: admin_sales_path, method: :get, local: true, class: "bg-white rounded-lg shadow p-4 mb-4 grid grid-cols-1 md:grid-cols-6 gap-3 items-end" do %>
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">Fecha</label>
+    <%= date_field_tag :date, @date,
+          class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" %>
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">Terminal</label>
+    <%= select_tag :terminal_id,
+          options_for_select([["Todas", ""], ["A", "A"], ["B", "B"]], params[:terminal_id]),
+          class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white" %>
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">Cajero</label>
+    <%= select_tag :user_id,
+          options_from_collection_for_select(@users, :id, :name, params[:user_id]),
+          include_blank: "Todos",
+          class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white" %>
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">Método</label>
+    <%= select_tag :payment_method,
+          options_for_select([["Todos", ""], ["Efectivo", "cash"], ["Crédito", "credit"], ["Mixto", "mixed"]], params[:payment_method]),
+          class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white" %>
+  </div>
+  <div>
+    <label class="block text-xs font-medium text-gray-600 mb-1">Estado</label>
+    <%= select_tag :status,
+          options_for_select([["Todos", ""], ["Completada", "completed"], ["Anulada", "voided"]], params[:status]),
+          class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 outline-none bg-white" %>
+  </div>
+  <div class="flex gap-2">
+    <%= submit_tag "Filtrar", class: "px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg font-medium cursor-pointer" %>
+    <%= link_to "Hoy", admin_sales_path, class: "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium" %>
+  </div>
+<% end %>
+
+<!-- Tabla -->
+<div class="bg-white rounded-lg shadow overflow-hidden">
+  <% if @sales.any? %>
+    <table class="w-full">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Número</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Hora</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Terminal</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Cajero</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Cliente</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Método</th>
+          <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Total</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Estado</th>
+          <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @sales.each do |sale| %>
+          <tr class="<%= sale.voided? ? 'bg-red-50 opacity-75' : '' %>">
+            <td class="px-4 py-3 text-sm font-mono"><%= sale.number %></td>
+            <td class="px-4 py-3 text-sm text-gray-600"><%= sale.sold_at&.strftime("%H:%M") %></td>
+            <td class="px-4 py-3 text-sm text-gray-600"><%= sale.terminal_id %></td>
+            <td class="px-4 py-3 text-sm"><%= sale.user.display_name %></td>
+            <td class="px-4 py-3 text-sm"><%= sale.display_customer %></td>
+            <td class="px-4 py-3 text-sm">
+              <% if sale.payment_method == "cash" %>
+                <span class="px-2 py-0.5 text-xs bg-blue-100 text-blue-700 rounded">Efectivo</span>
+              <% elsif sale.payment_method == "credit" %>
+                <span class="px-2 py-0.5 text-xs bg-orange-100 text-orange-700 rounded">Crédito</span>
+              <% elsif sale.payment_method == "mixed" %>
+                <span class="px-2 py-0.5 text-xs bg-purple-100 text-purple-700 rounded">Mixto</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 text-right text-sm font-medium">
+              $ <%= number_with_delimiter(sale.total.to_i, delimiter: ".") %>
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <% if sale.voided? %>
+                <span class="px-2 py-0.5 text-xs bg-red-100 text-red-700 rounded">Anulada</span>
+              <% else %>
+                <span class="px-2 py-0.5 text-xs bg-green-100 text-green-700 rounded">Completada</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 text-right text-sm">
+              <%= link_to "Ver", admin_sale_path(sale),
+                    class: "text-xs px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded" %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="p-12 text-center text-gray-500">
+      <p>No hay ventas con los filtros seleccionados.</p>
+      <%= link_to "Ver todas de hoy", admin_sales_path, class: "inline-block mt-2 text-emerald-600 hover:underline" %>
+    </div>
+  <% end %>
+</div>

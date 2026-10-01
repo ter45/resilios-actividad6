@@ -1,0 +1,56 @@
+<%= form_with model: [:admin, user], class: "space-y-5" do |f| %>
+  <% if user.errors.any? %>
+    <div role="alert" class="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
+      <p class="font-medium mb-2">Revisa los datos del usuario:</p>
+      <ul class="list-disc list-inside text-sm">
+        <% user.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+  <% field_class = "w-full px-4 py-2 border border-gray-300 rounded-lg bg-white focus:ring-2 focus:ring-emerald-500 outline-none" %>
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+    <div>
+      <%= f.label :name, "Nombre completo", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :name, required: true, minlength: 2, maxlength: 100, autocomplete: "name", class: field_class %>
+    </div>
+    <div>
+      <%= f.label :email, "Correo electrónico", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.email_field :email, required: true, autocomplete: "off", class: field_class %>
+    </div>
+    <div>
+      <%= f.label :role, "Rol", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.select :role, user_role_options(user), {}, class: field_class %>
+      <p class="text-xs text-gray-500 mt-1">El administrador gestiona el negocio y los usuarios. El cajero registra ventas.</p>
+    </div>
+    <div>
+      <%= f.label :terminal_assigned, "Terminal asignada", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.select :terminal_assigned, [["Sin asignar", ""], ["Terminal A", "A"], ["Terminal B", "B"]], {}, class: field_class %>
+      <p class="text-xs text-gray-500 mt-1">Obligatoria para cajeros. Un administrador sin asignación usa la terminal A al vender.</p>
+    </div>
+    <div>
+      <%= f.label :password, user.persisted? ? "Nueva contraseña" : "Contraseña", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.password_field :password, required: user.new_record?, minlength: Devise.password_length.min, autocomplete: "new-password", class: field_class %>
+      <p class="text-xs text-gray-500 mt-1">Mínimo <%= Devise.password_length.min %> caracteres.<%= " Deja ambos campos vacíos para conservar la contraseña." if user.persisted? %></p>
+    </div>
+    <div>
+      <%= f.label :password_confirmation, "Confirmar contraseña", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.password_field :password_confirmation, required: user.new_record?, autocomplete: "new-password", class: field_class %>
+    </div>
+  </div>
+  <div class="pt-4 border-t border-gray-200">
+    <div class="flex items-center gap-2">
+      <%= f.check_box :active, class: "h-4 w-4 rounded border-gray-300" %>
+      <%= f.label :active, "Usuario activo", class: "text-sm font-medium text-gray-700" %>
+    </div>
+    <p class="text-xs text-gray-500 mt-1">Una cuenta inactiva no puede acceder. Sus ventas e historial se conservan.</p>
+    <% if user == current_user %>
+      <p class="text-sm text-gray-600 mt-2">No puedes desactivar tu propia cuenta ni quitarte el rol de administrador.</p>
+    <% end %>
+  </div>
+  <div class="flex gap-3 pt-4">
+    <%= f.submit user.persisted? ? "Guardar cambios" : "Crear usuario", class: "px-5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white font-medium rounded-lg cursor-pointer" %>
+    <%= link_to "Cancelar", admin_users_path, class: "px-5 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg" %>
+  </div>
+<% end %>

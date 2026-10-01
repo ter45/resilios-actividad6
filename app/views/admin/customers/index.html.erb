@@ -1,0 +1,121 @@
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="text-2xl font-bold text-gray-900">Clientes</h2>
+    <p class="text-sm text-gray-500 mt-1"><%= pluralize(@customers.size, "cliente") %></p>
+  </div>
+  <% if policy(Customer).create? %>
+    <%= link_to "+ Nuevo cliente", new_admin_customer_path,
+          class: "px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition" %>
+  <% end %>
+</div>
+
+<%= form_with url: admin_customers_path, method: :get, local: true, class: "bg-white rounded-lg shadow p-4 mb-4 flex gap-3 items-end flex-wrap" do %>
+  <div class="flex-1 min-w-64">
+    <label class="block text-xs font-medium text-gray-600 mb-1">Buscar</label>
+    <%= text_field_tag :q, params[:q],
+          placeholder: "Nombre, documento o teléfono",
+          class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none" %>
+  </div>
+  <div class="w-48">
+    <label class="block text-xs font-medium text-gray-600 mb-1">Filtro</label>
+    <%= select_tag :filter,
+          options_for_select([
+            ["Todos", ""],
+            ["Con cupo de crédito", "with_credit"],
+            ["Con deuda pendiente", "with_debt"]
+          ], params[:filter]),
+          class: "w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none bg-white" %>
+  </div>
+  <%= submit_tag "Filtrar", class: "px-4 py-2 bg-slate-700 hover:bg-slate-800 text-white rounded-lg font-medium cursor-pointer" %>
+  <% if params[:q].present? || params[:filter].present? %>
+    <%= link_to "Limpiar", admin_customers_path, class: "px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg font-medium" %>
+  <% end %>
+<% end %>
+
+<div class="bg-white rounded-lg shadow overflow-hidden">
+  <% if @customers.any? %>
+    <table class="w-full">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Cliente</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Documento</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Teléfono</th>
+          <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Cupo</th>
+          <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Saldo</th>
+          <th class="text-left px-4 py-3 text-xs font-medium text-gray-500 uppercase">Estado</th>
+          <th class="text-right px-4 py-3 text-xs font-medium text-gray-500 uppercase">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @customers.each do |customer| %>
+          <tr class="<%= customer.discarded? ? 'bg-red-50 opacity-60' : (customer.active? ? '' : 'bg-gray-50') %>">
+            <td class="px-4 py-3">
+              <div class="font-medium text-gray-900"><%= customer.name %></div>
+              <% if customer.address.present? %>
+                <div class="text-xs text-gray-500"><%= customer.address %></div>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 text-sm font-mono text-gray-600"><%= customer.display_document %></td>
+            <td class="px-4 py-3 text-sm text-gray-600"><%= customer.phone.presence || "—" %></td>
+            <td class="px-4 py-3 text-right text-sm <%= customer.credit_limit.positive? ? 'text-gray-700' : 'text-gray-300' %>">
+              <%= customer.credit_limit.positive? ? "$ #{customer.credit_limit.to_i}" : "—" %>
+            </td>
+            <td class="px-4 py-3 text-right text-sm">
+              <% if customer.in_debt? %>
+                <span class="font-medium text-orange-700">$ <%= customer.credit_balance.to_i %></span>
+                <% if customer.credit_limit.positive? %>
+                  <div class="text-xs text-gray-500"><%= customer.credit_used_percent %>% usado</div>
+                <% end %>
+              <% else %>
+                <span class="text-gray-300">—</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 text-sm">
+              <% if customer.discarded? %>
+                <span class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">Eliminado</span>
+              <% elsif customer.active? %>
+                <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">Activo</span>
+              <% else %>
+                <span class="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded">Inactivo</span>
+              <% end %>
+            </td>
+            <td class="px-4 py-3 text-sm text-right space-x-1">
+              <% unless customer.discarded? %>
+                <% if policy(customer).toggle_active? %>
+                  <%= button_to customer.active? ? "Desactivar" : "Activar",
+                        toggle_active_admin_customer_path(customer),
+                        method: :patch,
+                        class: "text-xs px-2 py-1 bg-gray-200 hover:bg-gray-300 rounded" %>
+                <% end %>
+                <% if policy(customer).update? %>
+                  <%= link_to "Editar", edit_admin_customer_path(customer),
+                        class: "text-xs px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded" %>
+                <% end %>
+                <% if policy(customer).destroy? %>
+                  <%= button_to "Eliminar",
+                        admin_customer_path(customer),
+                        method: :delete,
+                        form: { data: { turbo_confirm: "¿Eliminar al cliente \"#{customer.name}\"?" } },
+                        class: "text-xs px-2 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded" %>
+                <% end %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="p-12 text-center text-gray-500">
+      <% if params[:q].present? || params[:filter].present? %>
+        <p>No hay clientes que coincidan con los filtros.</p>
+        <%= link_to "Quitar filtros", admin_customers_path, class: "inline-block mt-2 text-emerald-600 hover:underline" %>
+      <% else %>
+        <p>No hay clientes todavía.</p>
+        <% if policy(Customer).create? %>
+          <%= link_to "Crear el primero", new_admin_customer_path,
+                class: "inline-block mt-4 text-emerald-600 hover:underline" %>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

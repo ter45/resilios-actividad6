@@ -1,0 +1,36 @@
+<div class="mb-6">
+  <%= link_to "← Volver", admin_products_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+  <h2 class="text-2xl font-bold text-gray-900 mt-2"><%= @product.name %></h2>
+</div>
+
+<div class="bg-white rounded-lg shadow p-6 max-w-3xl">
+  <dl class="grid grid-cols-2 gap-4 text-sm">
+    <div><dt class="text-xs text-gray-500 uppercase">Categoría</dt><dd class="font-medium"><%= @product.category.name %></dd></div>
+    <div><dt class="text-xs text-gray-500 uppercase">Tipo</dt><dd class="font-medium"><%= @product.weight_priced? ? "Por peso (kg)" : "Por unidad" %></dd></div>
+    <div><dt class="text-xs text-gray-500 uppercase">SKU</dt><dd class="font-mono"><%= @product.sku || "—" %></dd></div>
+    <div><dt class="text-xs text-gray-500 uppercase">Código de barras</dt><dd class="font-mono"><%= @product.barcode || "—" %></dd></div>
+    <div><dt class="text-xs text-gray-500 uppercase">Costo</dt><dd>$ <%= @product.cost.to_i %></dd></div>
+    <div><dt class="text-xs text-gray-500 uppercase">Precio</dt><dd class="font-medium"><%= @product.display_price %></dd></div>
+    <div><dt class="text-xs text-gray-500 uppercase">Margen</dt><dd><%= @product.margin %>%</dd></div>
+    <div><dt class="text-xs text-gray-500 uppercase">Stock</dt><dd><%= @product.weight_priced? ? "#{@product.stock} kg" : @product.stock.to_i %></dd></div>
+    <div><dt class="text-xs text-gray-500 uppercase">IVA</dt><dd><%= (@product.tax_rate * 100).to_i %>%</dd></div>
+    <div><dt class="text-xs text-gray-500 uppercase">Estado</dt>
+      <dd>
+        <% if @product.discarded? %>
+          <span class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">Eliminado</span>
+        <% elsif @product.active? %>
+          <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">Activo</span>
+        <% else %>
+          <span class="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded">Inactivo</span>
+        <% end %>
+      </dd>
+    </div>
+  </dl>
+
+  <% if policy(@product).update? %>
+    <div class="mt-6 pt-4 border-t border-gray-200">
+      <%= link_to "Editar", edit_admin_product_path(@product),
+            class: "px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg" %>
+    </div>
+  <% end %>
+</div>

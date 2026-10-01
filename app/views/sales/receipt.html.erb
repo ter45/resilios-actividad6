@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Ticket <%= @sale.number %></title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: Arial, sans-serif; margin: 0; background: #f1f5f9; color: #111; }
+    .controls { max-width: 780px; margin: 20px auto; padding: 16px; line-height: 1.6; }
+    .controls a, .controls button { display: inline-block; padding: 8px 12px; margin: 4px; border: 1px solid #ccc; border-radius: 5px; background: white; color: #174d3b; cursor: pointer; font: inherit; }
+    .controls button { background: #047857; color: white; }
+    article { width: <%= @paper == 'a4' ? '186' : (@paper.to_i - 4) %>mm; max-width: 100%; margin: 16px auto; padding: 2mm; background: white; font-size: <%= @paper == '58' ? '10' : '12' %>px; }
+    header, footer { text-align: center; }
+    h1 { font-size: 19px; margin: 8px 0; }
+    p { margin: 4px 0; overflow-wrap: anywhere; }
+    .logo { max-width: 90%; max-height: 35mm; object-fit: contain; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; table-layout: fixed; }
+    th, td { padding: 5px 2px; text-align: left; vertical-align: top; overflow-wrap: anywhere; }
+    th { border-bottom: 1px dashed black; }
+    th:last-child, td:last-child { text-align: right; width: 28%; }
+    .summary { border-top: 1px dashed black; padding-top: 8px; }
+    .row { display: flex; justify-content: space-between; gap: 8px; margin: 5px 0; }
+    .total { font-size: 16px; font-weight: bold; }
+    footer { border-top: 1px dashed black; margin-top: 12px; padding-top: 10px; }
+    @page { size: <%= @paper == 'a4' ? 'A4' : 'auto' %>; margin: <%= @paper == 'a4' ? '12mm' : '0' %>; }
+    @media print { body { background: white; } .controls { display: none; } article { margin: 0; max-width: none; } tr { break-inside: avoid; } }
+  </style>
+</head>
+<body>
+  <section class="controls">
+    <p><strong>Venta <%= @sale.number %> guardada.</strong> Elige el formato y pulsa Imprimir.</p>
+    <div>
+      <%= link_to "EPSON / hoja A4", url_for(paper: "a4") %>
+      <%= link_to "Térmica 58 mm", url_for(paper: "58") %>
+      <%= link_to "Térmica 80 mm", url_for(paper: "80") %>
+      <button type="button" onclick="window.print()">Imprimir</button>
+      <%= link_to "Volver al punto de venta", pos_root_path %>
+    </div>
+    <p>En el diálogo de Windows selecciona tu impresora y el tamaño de papel correspondiente. Usa escala 100 % y desactiva encabezados y pies del navegador. Cancelar la impresión no anula la venta.</p>
+  </section>
+  <article aria-label="Ticket de venta">
+    <header>
+      <% if @setting.logo.attached? %><%= image_tag @setting.logo, alt: "Logo del negocio", class: "logo" %><% end %>
+      <h1><%= @setting.business_name %></h1>
+      <% [@setting.legal_name, @setting.address, @setting.city, @setting.phone].each do |value| %>
+        <% if value.present? %><p><%= value %></p><% end %>
+      <% end %>
+      <% if @setting.nit.present? %><p>NIT: <%= @setting.nit %></p><% end %>
+      <% if @setting.ticket_header.present? %><p><%= @setting.ticket_header %></p><% end %>
+    </header>
+    <% if @sale.voided? %><h2>VENTA ANULADA</h2><% end %>
+    <p>Ticket: <%= @sale.number %></p>
+    <p>Fecha: <%= @sale.sold_at&.strftime("%d/%m/%Y %H:%M") %></p>
+    <p>Cajero: <%= @sale.user.display_name %> · Terminal <%= @sale.terminal_id %></p>
+    <p>Cliente: <%= @sale.display_customer %></p>
+    <table>
+      <thead><tr><th>Producto / cantidad / precio</th><th>Total</th></tr></thead>
+      <tbody>
+        <% @items.each do |item| %>
+          <tr><td><strong><%= item.product_name %></strong><br><%= item.display_quantity %> × <%= number_to_currency(item.unit_price, unit: "$", precision: 2) %></td><td><%= number_to_currency(item.line_total, unit: "$", precision: 2) %></td></tr>
+        <% end %>
+      </tbody>
+    </table>
+    <div class="summary">
+      <% [["Subtotal", @sale.subtotal], ["IVA", @sale.tax_total], ["Descuento", @sale.discount_total]].each do |label, amount| %>
+        <div class="row"><span><%= label %></span><span><%= number_to_currency(amount, unit: "$", precision: 2) %></span></div>
+      <% end %>
+      <div class="row total"><span>TOTAL</span><span><%= number_to_currency(@sale.total, unit: "$", precision: 2) %></span></div>
+      <p>Pago: <%= { "cash" => "Efectivo", "credit" => "Crédito", "mixed" => "Mixto" }[@sale.payment_method] %></p>
+      <% if @sale.mixed? %><p>Efectivo: <%= @sale.cash_amount %> · Crédito: <%= @sale.credit_amount %></p><% end %>
+    </div>
+    <footer><%= @setting.ticket_footer.presence || "Gracias por su compra" %></footer>
+  </article>
+</body>
+</html>

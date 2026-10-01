@@ -1,0 +1,73 @@
+<div class="flex items-center justify-between mb-6">
+  <div>
+    <h2 class="text-2xl font-bold text-gray-900">Categorías</h2>
+    <p class="text-sm text-gray-500 mt-1"><%= pluralize(@categories.size, "categoría") %></p>
+  </div>
+  <% if policy(Category).create? %>
+    <%= link_to "+ Nueva categoría", new_admin_category_path,
+          class: "px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-medium transition" %>
+  <% end %>
+</div>
+
+<div class="bg-white rounded-lg shadow overflow-hidden">
+  <% if @categories.any? %>
+    <table class="w-full">
+      <thead class="bg-gray-50 border-b border-gray-200">
+        <tr>
+          <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Pos</th>
+          <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Código</th>
+          <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Nombre</th>
+          <th class="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase">Estado</th>
+          <th class="text-right px-6 py-3 text-xs font-medium text-gray-500 uppercase">Acciones</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-200">
+        <% @categories.each do |category| %>
+          <tr class="<%= category.discarded? ? 'bg-red-50 opacity-60' : (category.active? ? '' : 'bg-gray-50') %>">
+            <td class="px-6 py-3 text-sm text-gray-600"><%= category.position %></td>
+            <td class="px-6 py-3 text-sm font-mono text-gray-700"><%= category.code || "—" %></td>
+            <td class="px-6 py-3 text-sm font-medium text-gray-900"><%= category.name %></td>
+            <td class="px-6 py-3 text-sm">
+              <% if category.discarded? %>
+                <span class="px-2 py-1 text-xs bg-red-100 text-red-700 rounded">Eliminada</span>
+              <% elsif category.active? %>
+                <span class="px-2 py-1 text-xs bg-green-100 text-green-700 rounded">Activa</span>
+              <% else %>
+                <span class="px-2 py-1 text-xs bg-gray-200 text-gray-700 rounded">Inactiva</span>
+              <% end %>
+            </td>
+            <td class="px-6 py-3 text-sm text-right space-x-2">
+              <% unless category.discarded? %>
+                <% if policy(category).toggle_active? %>
+                  <%= button_to category.active? ? "Desactivar" : "Activar",
+                        toggle_active_admin_category_path(category),
+                        method: :patch,
+                        class: "text-xs px-3 py-1 bg-gray-200 hover:bg-gray-300 rounded" %>
+                <% end %>
+                <% if policy(category).update? %>
+                  <%= link_to "Editar", edit_admin_category_path(category),
+                        class: "text-xs px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded" %>
+                <% end %>
+                <% if policy(category).destroy? %>
+                  <%= button_to "Eliminar",
+                        admin_category_path(category),
+                        method: :delete,
+                        form: { data: { turbo_confirm: "¿Eliminar la categoría \"#{category.name}\"?" } },
+                        class: "text-xs px-3 py-1 bg-red-100 hover:bg-red-200 text-red-700 rounded" %>
+                <% end %>
+              <% end %>
+            </td>
+          </tr>
+        <% end %>
+      </tbody>
+    </table>
+  <% else %>
+    <div class="p-12 text-center text-gray-500">
+      <p>No hay categorías todavía.</p>
+      <% if policy(Category).create? %>
+        <%= link_to "Crear la primera", new_admin_category_path,
+              class: "inline-block mt-4 text-emerald-600 hover:underline" %>
+      <% end %>
+    </div>
+  <% end %>
+</div>

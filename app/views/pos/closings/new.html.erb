@@ -1,0 +1,85 @@
+<div class="min-h-screen bg-slate-900 text-white"
+     data-controller="closing"
+     data-closing-terminal-id-value="<%= @terminal_id %>"
+     data-closing-expected-value="<%= @stats[:expected_cash].to_i %>">
+
+  <header class="bg-slate-800 px-6 py-3 flex items-center justify-between border-b border-slate-700">
+    <div class="flex items-center gap-4">
+      <h1 class="text-lg font-bold">Cierre de caja</h1>
+      <span class="text-xs px-2 py-1 bg-emerald-700 rounded">Terminal <%= @terminal_id %></span>
+      <span class="text-xs text-slate-400"><%= current_user.display_name %></span>
+    </div>
+    <%= link_to "← Volver al POS", new_pos_sale_path, class: "text-sm text-slate-300 hover:text-white" %>
+  </header>
+
+  <main class="max-w-4xl mx-auto p-8 space-y-6">
+
+    <!-- Resumen del turno -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+      <div class="bg-slate-800 rounded-lg p-4">
+        <p class="text-xs text-slate-400 uppercase">Ventas del turno</p>
+        <p class="text-3xl font-bold mt-1"><%= @stats[:sales_count] %></p>
+        <% if @stats[:voided_count].positive? %>
+          <p class="text-xs text-red-400 mt-1"><%= @stats[:voided_count] %> anuladas</p>
+        <% end %>
+      </div>
+      <div class="bg-slate-800 rounded-lg p-4">
+        <p class="text-xs text-slate-400 uppercase">Apertura</p>
+        <p class="text-lg font-medium mt-1"><%= @stats[:opened_at].strftime("%d/%m %H:%M") %></p>
+        <p class="text-xs text-slate-500 mt-1">Cierre ahora: <%= @stats[:now].strftime("%H:%M") %></p>
+      </div>
+      <div class="bg-emerald-900/50 border border-emerald-700 rounded-lg p-4">
+        <p class="text-xs text-emerald-300 uppercase">Efectivo esperado</p>
+        <p class="text-3xl font-bold text-emerald-400 mt-1">$ <%= number_with_delimiter(@stats[:expected_cash].to_i, delimiter: ".") %></p>
+      </div>
+      <div class="bg-slate-800 rounded-lg p-4">
+        <p class="text-xs text-slate-400 uppercase">Crédito del turno</p>
+        <p class="text-lg font-medium mt-1">$ <%= number_with_delimiter(@stats[:credit_total].to_i, delimiter: ".") %></p>
+        <p class="text-xs text-slate-500 mt-1">(no afecta caja)</p>
+      </div>
+    </div>
+
+    <!-- Form de cierre -->
+    <div class="bg-slate-800 rounded-lg p-6">
+      <h2 class="text-lg font-semibold mb-4">Conteo de efectivo</h2>
+      <p class="text-sm text-slate-400 mb-4">Contá el dinero físico de la caja y declarálo abajo.</p>
+
+      <div class="space-y-4">
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Efectivo contado (COP)</label>
+          <input type="number"
+                 data-closing-target="countedInput"
+                 data-action="input->closing#updateDifference"
+                 step="1000"
+                 min="0"
+                 placeholder="0"
+                 class="w-full px-4 py-3 bg-slate-900 border border-slate-600 rounded-lg text-2xl font-bold focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none">
+        </div>
+
+        <div data-closing-target="differenceBox" class="hidden">
+          <p class="text-xs text-slate-400 uppercase mb-1">Diferencia</p>
+          <p class="text-2xl font-bold" data-closing-target="differenceText"></p>
+          <p class="text-xs mt-1" data-closing-target="differenceStatus"></p>
+        </div>
+
+        <div>
+          <label class="block text-sm font-medium text-slate-300 mb-1">Observaciones (opcional)</label>
+          <textarea data-closing-target="notes"
+                    rows="2"
+                    placeholder="Ej: faltan billetes de 50.000, sobra moneda chica"
+                    class="w-full px-3 py-2 bg-slate-900 border border-slate-600 rounded-lg text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 outline-none"></textarea>
+        </div>
+
+        <div data-closing-target="errorBox" class="hidden bg-red-900/50 border border-red-700 rounded p-2 text-xs text-red-200"></div>
+
+        <button data-closing-target="submitButton"
+                data-action="click->closing#submit"
+                class="w-full py-4 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-lg font-bold disabled:opacity-40 disabled:cursor-not-allowed">
+          Confirmar cierre
+        </button>
+      </div>
+    </div>
+  </main>
+</div>
+
+<%= csrf_meta_tags %>

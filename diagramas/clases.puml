@@ -1,0 +1,32 @@
+@startuml
+title Clases y contrato de estrategias
+class "Catalog::Navigation" as Navigation {
+  - query
+  - category_id
+  - page
+  + call(): Result
+}
+interface "SearchStrategy\n(contrato conceptual)" as Strategy {
+  + call(scope, query): Relation
+}
+class "Catalog::NameStrategy" as Name {
+  + call(scope, query): Relation
+}
+class "Catalog::CodeStrategy" as Code {
+  + call(scope, query): Relation
+}
+class "Result" as Result {
+  products
+  page
+  has_more
+  strategy
+}
+Navigation --> Strategy : selecciona y utiliza
+Name ..|> Strategy
+Code ..|> Strategy
+Navigation ..> Result : devuelve
+note right of Strategy
+  Duck typing en Ruby.
+  No se implementa una clase base.
+end note
+@enduml
