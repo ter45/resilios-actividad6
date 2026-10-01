@@ -21,7 +21,7 @@ gem "devise", "~> 4.9"
 gem "pundit", "~> 2.4"
 
 # Domain
-gem "money-rails", "~> 1.15"
+gem "money-rails", "~> 3.0"
 gem "discard", "~> 1.4"
 gem "audited", "~> 5.7"
 
